@@ -1,4 +1,4 @@
-#include "lib.h"
+#include "lib/lib.h"
 
 /* without this gcc turns the loops back into calls to themselves */
 #define NOLOOPCALL __attribute__((optimize("no-tree-loop-distribute-patterns")))

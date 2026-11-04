@@ -1,5 +1,5 @@
-#include "input.h"
-#include "lib.h"
+#include "drivers/input.h"
+#include "lib/lib.h"
 
 int mouse_x, mouse_y, mouse_btn;
 

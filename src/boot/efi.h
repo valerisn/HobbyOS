@@ -1,10 +1,7 @@
 #ifndef EFI_H
 #define EFI_H
 
-typedef unsigned char u8;
-typedef unsigned short u16;
-typedef unsigned int u32;
-typedef unsigned long long u64;
+#include "lib/types.h"
 
 /* mingw already targets the MS x64 ABI, which is what UEFI wants. no attributes needed */
 

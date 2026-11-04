@@ -1,6 +1,6 @@
 #ifndef INPUT_H
 #define INPUT_H
-#include "efi.h"
+#include "lib/types.h"
 
 extern int mouse_x, mouse_y, mouse_btn;
 

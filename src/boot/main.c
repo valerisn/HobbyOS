@@ -1,7 +1,7 @@
-#include "efi.h"
-#include "gfx.h"
-#include "input.h"
-#include "desktop.h"
+#include "boot/efi.h"
+#include "gfx/gfx.h"
+#include "drivers/input.h"
+#include "ui/desktop.h"
 
 /* parked here because the map must not be allocated between GetMemoryMap and Exit */
 static u8 mmap[1 << 16] __attribute__((aligned(8)));
@@ -33,8 +33,9 @@ u64 efi_main(void *image, EfiSystemTable *st)
     GopInfo *info = gop->mode->info;
     if (info->format > 1) return 1;
 
+    /* two frames: the live buffer and the cached wallpaper */
     u32 *back;
-    if (bs->AllocatePool(2, (u64)info->hres * info->vres * 4, (void **)&back)) return 1;
+    if (bs->AllocatePool(2, (u64)info->hres * info->vres * 8, (void **)&back)) return 1;
 
     gfx_init((void *)gop->mode->fb_base, info->pitch, info->hres, info->vres, info->format == 1, back);
 
