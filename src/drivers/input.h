@@ -5,7 +5,9 @@
 extern int mouse_x, mouse_y, mouse_btn;
 
 void input_init(int w, int h);
-/* nonzero if the mouse moved, a button changed, or a key got queued */
+/* called from the irq handlers */
+void input_irq(void);
+/* nonzero if anything arrived since the last call: mouse move, button, key */
 int input_poll(void);
 /* next typed char, 0 if none */
 int input_key(void);

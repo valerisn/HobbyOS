@@ -1,4 +1,5 @@
 #include "drivers/input.h"
+#include "cpu/idt.h"
 #include "lib/lib.h"
 
 int mouse_x, mouse_y, mouse_btn;
@@ -8,7 +9,9 @@ static int shift, ext;
 static u8 pkt[3];
 static int pkt_n;
 static char keyq[32];
-static int kq_head, kq_tail;
+/* the irq handler is the only producer and the main loop the only consumer */
+static volatile int kq_head, kq_tail;
+static volatile int dirty;
 
 /* set 1 scancodes, the controller translates for us (see input_init) */
 static const char map_n[] = "\0\x1b" "1234567890-=" "\b\t" "qwertyuiop[]" "\n\0" "asdfghjkl;'`" "\0\\" "zxcvbnm,./" "\0*\0 ";
@@ -40,8 +43,8 @@ void input_init(int w, int h)
     kbc_cmd(0x20);
     int cfg = kbc_read();
     if (cfg < 0) cfg = 0x45;
-    /* irqs off since we poll, both clocks on, translation on so the tables above hold */
-    cfg = (cfg & ~0x33) | 0x40;
+    /* irq1 and irq12 on, both clocks on, translation on so the tables above hold */
+    cfg = (cfg & ~0x30) | 0x43;
     kbc_cmd(0x60);
     kbc_data(cfg);
 
@@ -57,6 +60,9 @@ void input_init(int w, int h)
     kbc_read();
 
     while (inb(0x64) & 1) inb(0x60);
+
+    irq_register(1, input_irq);
+    irq_register(12, input_irq);
 }
 
 static void key_scan(u8 sc)
@@ -94,22 +100,26 @@ static int mouse_byte(u8 b)
     return 1;
 }
 
-int input_poll(void)
+/* keyboard and mouse share one output buffer, so either irq just drains whatever is there */
+void input_irq(void)
 {
-    int changed = 0;
     int budget = 64;
     u8 st;
     while (budget-- && ((st = inb(0x64)) & 1)) {
         u8 d = inb(0x60);
         if (st & 0x20) {
-            changed |= mouse_byte(d);
+            if (mouse_byte(d)) dirty = 1;
         } else {
             int before = kq_head;
             key_scan(d);
-            changed |= (before != kq_head);
+            if (before != kq_head) dirty = 1;
         }
     }
-    return changed;
+}
+
+int input_poll(void)
+{
+    return __atomic_exchange_n(&dirty, 0, __ATOMIC_ACQ_REL);
 }
 
 int input_key(void)
