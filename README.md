@@ -7,12 +7,13 @@ A small x86_64 hobby OS written from scratch in C. It boots through UEFI, takes 
 - UEFI boot, GOP framebuffer, double buffered software rendering
 - Anti-aliased text, rounded windows, soft shadows, translucency
 - Top panel with clock and power menu, floating dock, draggable stacking windows
-- PS/2 keyboard and mouse (polled), RTC clock
-- Terminal app (`help`, `clear`, `echo`, `time`, `res`, `ver`, `neofetch`, `reboot`, `poweroff`) and an About app
+- Own GDT, TSS and IDT, PIC and 100Hz PIT timer, interrupt-driven PS/2 keyboard and mouse, `hlt` when idle
+- Crash screen with registers for any CPU exception, RTC clock
+- Terminal app (`help`, `clear`, `echo`, `time`, `uptime`, `res`, `ver`, `neofetch`, `crash`, `reboot`, `poweroff`) and an About app
 
 ## What does not exist yet
 
-Own GDT/IDT and interrupts, memory manager, scheduler, filesystem, USB input, real apps. Right now it runs on the firmware's page tables and descriptor tables with interrupts disabled. Power off only works under QEMU.
+Memory manager, scheduler, filesystem, USB input, APIC, real apps. It still runs on the firmware's page tables and the legacy 8259 PIC. Power off only works under QEMU.
 
 ## Build and run
 
@@ -30,9 +31,10 @@ To try it on hardware or another VM, copy `BOOTX64.EFI` to `EFI/BOOT/` on a FAT3
 
 ```
 src/
-  boot/      UEFI types and entry point, main loop
+  boot/      UEFI types and entry point, main loop, crash screen
+  cpu/       GDT, IDT, interrupt stubs
   lib/       freestanding libc bits, shared types, version
-  drivers/   PS/2 input, RTC, power
+  drivers/   PIC, PIT timer, PS/2 input, RTC, power
   gfx/       framebuffer, alpha blending, rounded rects, shadows, text
   ui/        window manager, panel, dock, desktop compositor, theme
   apps/      terminal, about, and the App interface they plug into
