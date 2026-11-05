@@ -9,6 +9,8 @@ u64 strlen(const char *s);
 int streq(const char *a, const char *b);
 int startswith(const char *s, const char *p);
 void utoa(u32 v, char *out);
+/* writes "0x" and 16 digits plus the terminator, so out needs 19 bytes */
+void utohex(u64 v, char *out);
 
 static inline void outb(u16 port, u8 v) { __asm__ volatile("outb %0, %1" :: "a"(v), "Nd"(port)); }
 static inline void outw(u16 port, u16 v) { __asm__ volatile("outw %0, %1" :: "a"(v), "Nd"(port)); }

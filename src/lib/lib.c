@@ -49,6 +49,15 @@ int startswith(const char *s, const char *p)
     return 1;
 }
 
+void utohex(u64 v, char *out)
+{
+    out[0] = '0';
+    out[1] = 'x';
+    for (int i = 0; i < 16; i++)
+        out[2 + i] = "0123456789abcdef"[(v >> (60 - 4 * i)) & 15];
+    out[18] = 0;
+}
+
 void utoa(u32 v, char *out)
 {
     char tmp[12];
