@@ -1,6 +1,7 @@
 #include "apps/terminal.h"
 #include "drivers/power.h"
 #include "drivers/rtc.h"
+#include "drivers/timer.h"
 #include "gfx/gfx.h"
 #include "lib/lib.h"
 #include "lib/version.h"
@@ -66,7 +67,7 @@ static void run(const char *cmd)
     if (!*cmd) return;
 
     if (streq(cmd, "help")) {
-        print("help clear echo time res ver neofetch reboot poweroff\n");
+        print("help clear echo time uptime res ver neofetch crash reboot poweroff\n");
     } else if (streq(cmd, "clear")) {
         nlines = 1;
         lines[0][0] = 0;
@@ -82,6 +83,14 @@ static void run(const char *cmd)
         rtc_read(&t);
         two(s, t.h); two(s + 3, t.m); two(s + 6, t.s);
         print(s);
+    } else if (streq(cmd, "uptime")) {
+        print_num(timer_uptime());
+        print(" seconds, ");
+        print_num(timer_ticks());
+        print(" ticks\n");
+    } else if (streq(cmd, "crash")) {
+        /* on purpose, proves the exception path and crash screen work */
+        __asm__ volatile("ud2");
     } else if (streq(cmd, "res")) {
         print_num(gfx_w); print("x"); print_num(gfx_h); print("\n");
     } else if (streq(cmd, "neofetch")) {

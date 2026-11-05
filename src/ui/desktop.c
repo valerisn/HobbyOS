@@ -6,11 +6,12 @@
 #include "apps/terminal.h"
 #include "drivers/input.h"
 #include "drivers/rtc.h"
+#include "drivers/timer.h"
 #include "gfx/gfx.h"
 
 static Time now;
 static int prev_down;
-static int ticks;
+static u64 last_sec;
 
 static const char *cursor_art[] = {
     "X           ",
@@ -69,12 +70,14 @@ int desktop_step(void)
 
 int desktop_tick(void)
 {
-    /* cmos reads trap in a vm, so don't do it every loop */
-    if (++ticks < 4096) return 0;
-    ticks = 0;
+    u64 sec = timer_uptime();
+    if (sec == last_sec) return 0;
+    last_sec = sec;
+
     int old = now.m;
     rtc_read(&now);
-    return old != now.m;
+    /* the about window shows uptime, so it needs a repaint every second */
+    return old != now.m || about_app.win.open;
 }
 
 static void draw_cursor(void)

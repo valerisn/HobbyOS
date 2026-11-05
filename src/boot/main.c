@@ -1,6 +1,10 @@
 #include "boot/efi.h"
 #include "gfx/gfx.h"
+#include "cpu/gdt.h"
+#include "cpu/idt.h"
 #include "drivers/input.h"
+#include "drivers/pic.h"
+#include "drivers/timer.h"
 #include "ui/desktop.h"
 
 /* parked here because the map must not be allocated between GetMemoryMap and Exit */
@@ -48,11 +52,16 @@ u64 efi_main(void *image, EfiSystemTable *st)
         if (tries) return 1;
     }
 
-    /* firmware's idt is dead from here on, any interrupt would triple fault */
+    /* firmware's idt is dead from here on, stay masked until we have our own */
     __asm__ volatile("cli");
 
+    gdt_init();
+    idt_init();
+    pic_init();
+    timer_init();
     input_init(gfx_w, gfx_h);
     desktop_init();
+    __asm__ volatile("sti");
 
     int dirty = 1;
     for (;;) {
@@ -64,7 +73,8 @@ u64 efi_main(void *image, EfiSystemTable *st)
             gfx_present();
             dirty = 0;
         } else {
-            __asm__ volatile("pause");
+            /* sleeps until the next interrupt, the 100hz timer guarantees one soon */
+            __asm__ volatile("hlt");
         }
     }
 }

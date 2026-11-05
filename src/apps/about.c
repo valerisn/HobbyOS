@@ -1,8 +1,21 @@
 #include "apps/about.h"
+#include "drivers/timer.h"
 #include "gfx/gfx.h"
 #include "lib/lib.h"
 #include "lib/version.h"
 #include "ui/theme.h"
+
+static void fmt_uptime(u64 s, char *out)
+{
+    char n[12];
+    u32 h = s / 3600, m = s / 60 % 60, sec = s % 60;
+    if (h) { utoa(h, n); for (char *p = n; *p; p++) *out++ = *p; *out++ = 'h'; *out++ = ' '; }
+    if (h || m) { utoa(m, n); for (char *p = n; *p; p++) *out++ = *p; *out++ = 'm'; *out++ = ' '; }
+    utoa(sec, n);
+    for (char *p = n; *p; p++) *out++ = *p;
+    *out++ = 's';
+    *out = 0;
+}
 
 static void draw(const App *self, int x, int y, int w, int h)
 {
@@ -28,9 +41,12 @@ static void draw(const App *self, int x, int y, int w, int h)
     for (char *s = b; *s; s++) *p++ = *s;
     *p = 0;
 
-    const char *keys[] = { "Architecture", "Firmware", "Display", "Input" };
-    const char *vals[] = { "x86_64", "UEFI", res, "PS/2, polled" };
-    for (int i = 0; i < 4; i++) {
+    char up[20];
+    fmt_uptime(timer_uptime(), up);
+
+    const char *keys[] = { "Architecture", "Firmware", "Display", "Input", "Uptime" };
+    const char *vals[] = { "x86_64", "UEFI", res, "PS/2, interrupts", up };
+    for (int i = 0; i < 5; i++) {
         int ry = y + 126 + i * 26;
         gfx_text(x + 30, ry, keys[i], COL_DIM, F_UI);
         gfx_text(x + 160, ry, vals[i], COL_FG, F_UI);
@@ -49,7 +65,7 @@ static void icon(int x, int y, int hover)
 
 App about_app = {
     .title = "About",
-    .win = { 330, 170, 420, 290, 0 },
+    .win = { 330, 170, 420, 320, 0 },
     .body_col = RGB(36, 36, 42),
     .body_alpha = 255,
     .draw = draw,
